@@ -12,15 +12,14 @@ import (
 )
 
 func main() {
-	//CheckArgs("<url>")
+
 	url, privateKeyFile := os.Args[1], os.Args[2]
 
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: <url> <privateKeyFile>")
 		os.Exit(1)
 	}
-	//privateKeyFile = "‪C:/Users/Jordan/.ssh/id_rsa"
-	//privateKeyFile := "C:/Users/Jordan/Desktop/id_rsa"
+
 	_, err := os.Stat(privateKeyFile)
 	if err != nil {
 		fmt.Println("Failed to read keyfile", privateKeyFile, err.Error())
