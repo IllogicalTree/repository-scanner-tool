@@ -4,6 +4,8 @@ This project was thrown together to scan a given repository for commit messages 
 
 ## Usage
 
+### From source
+
 ```
 go run . <repoUrl> <privateKeyFile>
 
@@ -24,6 +26,21 @@ For me the command looks like:
 ```
 go run . git@bitbucket.org:15027887/personal-reflections.git C:/Users/Jordan/.ssh/id_rsa
 
+```
+
+### From executable 
+
+If don't have go installed and you are naive enough to blindly execute an exe find it in the [releases](https://github.com/IllogicalTree/repository-scanner-tool/releases/) section.
+
+
+``` 
+scanner.exe <repoUrl> <privateKeyFile>
+```
+
+While I haven't done anything malicious I won't go into how bad of an idea it is to blindly run an exe file, if you would like an executable you can build from source using the following command and then run the exe file as above.
+
+```
+go build -o "scanner.exe" .
 ```
 
 ## Notes
