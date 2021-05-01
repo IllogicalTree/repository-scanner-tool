@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,42 +12,51 @@ import (
 	"github.com/go-git/go-git/storage/memory"
 )
 
+func getRepositories(filePath string) []string {
+
+	file, err := os.Open(filePath)
+	repositories := []string{}
+
+	if err != nil {
+		fmt.Println("Error", err.Error())
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		repositories = append(repositories, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error", err.Error())
+		os.Exit(1)
+	}
+
+	return repositories
+}
+
 func main() {
 
-	url, privateKeyFile := os.Args[1], os.Args[2]
+	repositoryFile, privateKeyFile := os.Args[1], os.Args[2]
 
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: <url> <privateKeyFile>")
+		fmt.Println("Usage: <repositoryFile> <privateKeyFile>")
 		os.Exit(1)
 	}
 
 	_, err := os.Stat(privateKeyFile)
 	if err != nil {
 		fmt.Println("Failed to read keyfile", privateKeyFile, err.Error())
-		return
+		os.Exit(1)
 	}
-
-	fmt.Println("Scanning repository", url)
 
 	publicKeys, err := ssh.NewPublicKeysFromFile("git", privateKeyFile, "")
 
 	if err != nil {
 		fmt.Println("Failed to generate publickeys", err.Error())
-		return
+		os.Exit(1)
 	}
-
-	r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
-		URL:      url,
-		Auth:     publicKeys,
-		Progress: os.Stdout,
-	})
-
-	if err != nil {
-		fmt.Println("Failed to clone repository", err.Error())
-	}
-
-	ref, err := r.Head()
-	cIter, err := r.Log(&git.LogOptions{From: ref.Hash()})
 
 	outcomeCommits := make(map[string]int)
 	outcomes := [30]string{
@@ -67,18 +77,37 @@ func main() {
 	outcomeReg, _ := regexp.Compile("(?i)lo*\\s?\\d.\\d.\\d.\\d")
 	outcomeNumReg, _ := regexp.Compile("\\d.\\d.\\d.\\d")
 
-	cIter.ForEach(func(c *object.Commit) error {
+	for _, url := range getRepositories(repositoryFile) {
 
-		// If commit contains matches regex for learning outcome
-		match := outcomeReg.MatchString(c.Message)
-		if match {
-			// Find the actual learning outcome number (without LO text)
-			outcomeNo := outcomeNumReg.FindString(c.Message)
-			// Increment number of outcome commits for outcome
-			outcomeCommits[outcomeNo]++
+		fmt.Println("Scanning for commits in", url)
+
+		r, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+			URL:      url,
+			Auth:     publicKeys,
+			Progress: os.Stdout,
+		})
+
+		if err != nil {
+			fmt.Println("Failed to clone repository", err.Error())
+			os.Exit(1)
 		}
-		return nil
-	})
+
+		ref, err := r.Head()
+		cIter, err := r.Log(&git.LogOptions{From: ref.Hash()})
+
+		cIter.ForEach(func(c *object.Commit) error {
+
+			// If commit contains matches regex for learning outcome
+			match := outcomeReg.MatchString(c.Message)
+			if match {
+				// Find the actual learning outcome number (without LO text)
+				outcomeNo := outcomeNumReg.FindString(c.Message)
+				// Increment number of outcome commits for outcome
+				outcomeCommits[outcomeNo]++
+			}
+			return nil
+		})
+	}
 
 	// Output results
 	for index, outcome := range outcomes {
