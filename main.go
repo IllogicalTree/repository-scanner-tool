@@ -100,10 +100,15 @@ func main() {
 			// If commit contains matches regex for learning outcome
 			match := outcomeReg.MatchString(c.Message)
 			if match {
-				// Find the actual learning outcome number (without LO text)
-				outcomeNo := outcomeNumReg.FindString(c.Message)
-				// Increment number of outcome commits for outcome
-				outcomeCommits[outcomeNo]++
+				// Find the actual learning outcome numbers (without LO text)
+				outcomeNos := outcomeNumReg.FindAllString(c.Message, -1)
+
+				// For each outcome matched in commit message
+				for _, outcomeNo := range outcomeNos {
+					// Increment number of outcome commits for outcome
+					outcomeCommits[outcomeNo]++
+				}
+
 			}
 			return nil
 		})
