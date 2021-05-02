@@ -1,6 +1,6 @@
 # Repository scanner tool
 
-This project was thrown together to scan a given repository for commit messages for an outcome tag similar to the repository tool, may make a web interface based on this one day™.
+This project was thrown together to scan a list of repositories for commit messages for an outcome tag similar to the repository tool, may make a web interface based on this one day™.
 
 ## Usage
 
